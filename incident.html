@@ -54,7 +54,6 @@
         gapi.load('client', {
           callback: function() {
             gapi.client.init({
-              apiKey: 'AIzaSyARlGRuTLNmrqLiplRsIq1xyq5pm86ge7c',  // Your API Key
               discoveryDocs: ["https://sheets.googleapis.com/$discovery/rest?version=v4"],
             }).then(function() {
               console.log("Google Sheets API initialized.");
@@ -100,7 +99,7 @@
         values: [values]
       };
 
-      // Set the authorization header in the request
+      // Set the authorization header in the request using the OAuth token (Bearer token)
       gapi.client.request({
         path: `https://sheets.googleapis.com/v4/spreadsheets/${params.spreadsheetId}/values/${params.range}:append`,
         method: 'POST',
@@ -109,7 +108,7 @@
           insertDataOption: params.insertDataOption
         },
         headers: {
-          'Authorization': `Bearer ${accessToken}`
+          'Authorization': `Bearer ${accessToken}`  // Use OAuth token for authorization
         },
         body: body
       }).then((response) => {
