@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>VigilCare - Submit Incident</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="form-container">
+    <h2>Submit a New Incident</h2>
+    <form id="incident-form">
+      <label for="patient-name">Patient Name</label>
+      <input type="text" id="patient-name" placeholder="Enter patient's name" required>
+
+      <label for="attendant-name">Attendant Name</label>
+      <input type="text" id="attendant-name" placeholder="Enter attendant's name" required>
+
+      <label for="incident-type">Incident Type</label>
+      <select id="incident-type">
+        <option value="Verbal Abuse">Verbal Abuse</option>
+        <option value="Physical Violence">Physical Violence</option>
+        <option value="Property Damage">Property Damage</option>
+      </select>
+
+      <label for="incident-description">Incident Description</label>
+      <textarea id="incident-description" rows="4" placeholder="Describe the incident"></textarea>
+
+      <button type="submit">Submit</button>
+    </form>
+  </div>
+
+  <!-- Load Google API Client Library -->
+  <script src="https://apis.google.com/js/api.js"></script>
+
+  <script>
+    let CLIENT_ID = '959824072139-lroeeknsfvsmtgnqmtkokm02g1ggqbbe.apps.googleusercontent.com';  // Your OAuth Client ID
+    let API_KEY = 'AIzaSyARlGRuTLNmrqLiplRsIq1xyq5pm86ge7c';  // Your API key
+    let DISCOVERY_DOCS = ["https://sheets.googleapis.com/$discovery/rest?version=v4"];
+    let SCOPES = "https://www.googleapis.com/auth/spreadsheets";
+
+    // Load the API client library and OAuth2 library
+    function handleClientLoad() {
+      console.log("Loading Google API client...");
+      gapi.load('client:auth2', initClient);
+    }
+
+    function initClient() {
+      gapi.client.init({
+        apiKey: API_KEY,
+        clientId: CLIENT_ID,
+        discoveryDocs: DISCOVERY_DOCS,
+        scope: SCOPES
+      }).then(function () {
+        console.log("Google Sheets API client initialized");
+
+        // Prompt the user to sign in
+        gapi.auth2.getAuthInstance().signIn().then(function () {
+          console.log("User signed in");
+        });
+      }, function(error) {
+        console.error("Error initializing Google API client: ", JSON.stringify(error, null, 2));
+      });
+    }
+
+    // Function to write data to Google Sheets
+    function writeDataToSheet(values) {
+      console.log("Attempting to write data to Google Sheets...");
+      const params = {
+        spreadsheetId: '1FY5Cq9wJZCHVzlFcOQb6Mj3EAa-RvBQ4aD9KFa11elI',  // Your Google Spreadsheet ID
+        range: 'Incidents!A1',  // The range to append data to
+        valueInputOption: 'RAW',
+        insertDataOption: 'INSERT_ROWS'
+      };
+
+      const body = {
+        values: [values]
+      };
+
+      gapi.client.sheets.spreadsheets.values.append(params, body).then((response) => {
+        console.log('Success:', response);
+        alert('Incident submitted successfully to Google Sheets!');
+      }, (error) => {
+        console.error('Error writing data to Google Sheets:', error);
+        alert('Failed to submit the incident.');
+      });
+    }
+
+    // Handle form submission
+    document.getElementById('incident-form').addEventListener('submit', function(e) {
+      e.preventDefault();
+      console.log("Form submission triggered.");
+
+      const patientName = document.getElementById('patient-name').value;
+      const attendantName = document.getElementById('attendant-name').value;
+      const incidentType = document.getElementById('incident-type').value;
+      const incidentDescription = document.getElementById('incident-description').value;
+
+      // Prepare the data to send to Google Sheets
+      const incidentData = [
+        patientName,
+        attendantName,
+        incidentType,
+        incidentDescription,
+        new Date().toLocaleString()  // Add a timestamp
+      ];
+
+      console.log("Incident data prepared: ", incidentData);
+
+      // Call the function to write data to the sheet
+      writeDataToSheet(incidentData);
+    });
+
+    // Load the Google API client library after the page loads
+    window.onload = function() {
+      console.log("Window loaded, starting API client initialization...");
+      handleClientLoad();
+    };
+  </script>
+</body>
+</html>
