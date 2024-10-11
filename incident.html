@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>VigilCare - Submit Incident</title>
   <link rel="stylesheet" href="styles.css">
-  <!-- New Google Identity Services library -->
+  <!-- New Google Identity Services (GIS) -->
   <script src="https://accounts.google.com/gsi/client" async defer></script>
 </head>
 <body>
@@ -31,9 +31,9 @@
       <button type="submit">Submit</button>
     </form>
 
-    <!-- Google Sign-In Button -->
+    <!-- Google Sign-In Button using GIS -->
     <div id="g_id_onload"
-         data-client_id="959824072139-lroeeknsfvsmtgnqmtkokm02g1ggqbbe.apps.googleusercontent.com"  <!-- Your OAuth Client ID -->
+         data-client_id="959824072139-lroeeknsfvsmtgnqmtkokm02g1ggqbbe.apps.googleusercontent.com"
          data-context="signin"
          data-ux_mode="popup"
          data-callback="handleCredentialResponse">
@@ -46,13 +46,11 @@
     function handleCredentialResponse(response) {
       console.log("Encoded JWT ID token: " + response.credential);
       
-      // For now, you can validate the token server-side if needed
-      // Example: Send the token to your server for authentication
-
+      // You can validate the JWT token server-side if needed
       alert("Signed in successfully!");
     }
 
-    // Function to write data to Google Sheets (you will need a server-side process for this)
+    // Function to write data to Google Sheets (use server-side processing for this in production)
     function writeDataToSheet(values) {
       console.log("Attempting to write data to Google Sheets...");
       
@@ -67,7 +65,6 @@
         values: [values]
       };
 
-      // Use Google Sheets API (typically would be called server-side)
       gapi.client.sheets.spreadsheets.values.append(params, body).then((response) => {
         console.log('Success:', response);
         alert('Incident submitted successfully to Google Sheets!');
@@ -98,10 +95,9 @@
 
       console.log("Incident data prepared: ", incidentData);
 
-      // Call the function to write data to the sheet (would typically be done server-side)
+      // Call the function to write data to the sheet
       writeDataToSheet(incidentData);
     });
-
   </script>
 </body>
 </html>
