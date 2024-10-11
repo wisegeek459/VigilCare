@@ -47,86 +47,18 @@
   </div>
 
   <script>
-    let accessToken = null;
+    let oauthToken = null;
 
     // Handle the response from Google Identity Services (GIS)
     function handleCredentialResponse(response) {
       console.log("Encoded JWT ID token: " + response.credential);
 
-      // Exchange the token for an OAuth2 access token using the Google API client
-      gapi.load('client', () => {
-        gapi.client.init({
-          discoveryDocs: ["https://sheets.googleapis.com/$discovery/rest?version=v4"],
-        }).then(() => {
-          accessToken = response.credential; // Store the credential
-          alert("Signed in successfully!");
-        }).catch((error) => {
-          console.error("Error initializing Google API client:", error);
-        });
-      });
+      // Exchange the JWT token for OAuth2 access token via the backend or directly use the credential to authorize API calls
+      oauthToken = response.credential; // Store the credential
+      gapi.load('client', initializeGoogleSheetsAPI); // Initialize Sheets API after sign-in
     }
 
-    // Function to write data to Google Sheets using OAuth2 token
-    function writeDataToSheet(values) {
-      console.log("Attempting to write data to Google Sheets...");
-
-      const params = {
-        spreadsheetId: '1FY5Cq9wJZCHVzlFcOQb6Mj3EAa-RvBQ4aD9KFa11elI',  // Your Google Sheets ID
-        range: 'Incidents!A1',  // The range to append data to
-        valueInputOption: 'RAW',
-        insertDataOption: 'INSERT_ROWS'
-      };
-
-      const body = {
-        values: [values]
-      };
-
-      // Use gapi.client.sheets with OAuth2 token
-      gapi.client.sheets.spreadsheets.values.append({
-        spreadsheetId: params.spreadsheetId,
-        range: params.range,
-        valueInputOption: params.valueInputOption,
-        insertDataOption: params.insertDataOption,
-        resource: body
-      }).then((response) => {
-        console.log('Success:', response);
-        alert('Incident submitted successfully to Google Sheets!');
-      }, (error) => {
-        console.error('Error writing data to Google Sheets:', error);
-        alert('Failed to submit the incident.');
-      });
-    }
-
-    // Handle form submission
-    document.getElementById('incident-form').addEventListener('submit', function(e) {
-      e.preventDefault();
-      console.log("Form submission triggered.");
-
-      const patientName = document.getElementById('patient-name').value;
-      const attendantName = document.getElementById('attendant-name').value;
-      const incidentType = document.getElementById('incident-type').value;
-      const incidentDescription = document.getElementById('incident-description').value;
-
-      // Prepare the data to send to Google Sheets
-      const incidentData = [
-        patientName,
-        attendantName,
-        incidentType,
-        incidentDescription,
-        new Date().toLocaleString()  // Add a timestamp
-      ];
-
-      console.log("Incident data prepared: ", incidentData);
-
-      // Ensure OAuth token is available before writing data
-      if (accessToken) {
-        writeDataToSheet(incidentData);
-      } else {
-        console.error("Access Token is missing. Please sign in.");
-        alert("Please sign in to submit the incident.");
-      }
-    });
-
-  </script>
-</body>
-</html>
+    // Initialize Google Sheets API client
+    function initializeGoogleSheetsAPI() {
+      gapi.client.init({
+      
