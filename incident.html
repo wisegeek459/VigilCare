@@ -86,12 +86,17 @@
       };
 
       // Make API request to append data to Google Sheets
-      gapi.client.sheets.spreadsheets.values.append({
-        spreadsheetId: params.spreadsheetId,
-        range: params.range,
-        valueInputOption: params.valueInputOption,
-        insertDataOption: params.insertDataOption,
-        resource: body
+      gapi.client.request({
+        path: `https://sheets.googleapis.com/v4/spreadsheets/${params.spreadsheetId}/values/${params.range}:append`,
+        method: 'POST',
+        params: {
+          valueInputOption: params.valueInputOption,
+          insertDataOption: params.insertDataOption
+        },
+        headers: {
+          'Authorization': `Bearer ${oauthToken}`  // Pass the OAuth2 token in the header
+        },
+        body: body
       }).then((response) => {
         console.log('Success:', response);
         alert('Incident submitted successfully to Google Sheets!');
