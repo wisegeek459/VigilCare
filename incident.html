@@ -5,6 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>VigilCare - Submit Incident</title>
   <link rel="stylesheet" href="styles.css">
+  <!-- New Google Identity Services library -->
+  <script src="https://accounts.google.com/gsi/client" async defer></script>
 </head>
 <body>
   <div class="form-container">
@@ -28,46 +30,34 @@
 
       <button type="submit">Submit</button>
     </form>
+
+    <!-- Google Sign-In Button -->
+    <div id="g_id_onload"
+         data-client_id="959824072139-lroeeknsfvsmtgnqmtkokm02g1ggqbbe.apps.googleusercontent.com"  <!-- Your OAuth Client ID -->
+         data-context="signin"
+         data-ux_mode="popup"
+         data-callback="handleCredentialResponse">
+    </div>
+    <div class="g_id_signin" data-type="standard"></div>
   </div>
 
-  <!-- Load Google API Client Library -->
-  <script src="https://apis.google.com/js/api.js"></script>
-
   <script>
-    let CLIENT_ID = '959824072139-lroeeknsfvsmtgnqmtkokm02g1ggqbbe.apps.googleusercontent.com';  // Your OAuth Client ID
-    let API_KEY = 'AIzaSyARlGRuTLNmrqLiplRsIq1xyq5pm86ge7c';  // Your API key
-    let DISCOVERY_DOCS = ["https://sheets.googleapis.com/$discovery/rest?version=v4"];
-    let SCOPES = "https://www.googleapis.com/auth/spreadsheets";
+    // Handle the response from Google Identity Services
+    function handleCredentialResponse(response) {
+      console.log("Encoded JWT ID token: " + response.credential);
+      
+      // For now, you can validate the token server-side if needed
+      // Example: Send the token to your server for authentication
 
-    // Load the API client library and OAuth2 library
-    function handleClientLoad() {
-      console.log("Loading Google API client...");
-      gapi.load('client:auth2', initClient);
+      alert("Signed in successfully!");
     }
 
-    function initClient() {
-      gapi.client.init({
-        apiKey: API_KEY,
-        clientId: CLIENT_ID,
-        discoveryDocs: DISCOVERY_DOCS,
-        scope: SCOPES
-      }).then(function () {
-        console.log("Google Sheets API client initialized");
-
-        // Prompt the user to sign in
-        gapi.auth2.getAuthInstance().signIn().then(function () {
-          console.log("User signed in");
-        });
-      }, function(error) {
-        console.error("Error initializing Google API client: ", JSON.stringify(error, null, 2));
-      });
-    }
-
-    // Function to write data to Google Sheets
+    // Function to write data to Google Sheets (you will need a server-side process for this)
     function writeDataToSheet(values) {
       console.log("Attempting to write data to Google Sheets...");
+      
       const params = {
-        spreadsheetId: '1FY5Cq9wJZCHVzlFcOQb6Mj3EAa-RvBQ4aD9KFa11elI',  // Your Google Spreadsheet ID
+        spreadsheetId: '1FY5Cq9wJZCHVzlFcOQb6Mj3EAa-RvBQ4aD9KFa11elI',  // Your Google Sheets ID
         range: 'Incidents!A1',  // The range to append data to
         valueInputOption: 'RAW',
         insertDataOption: 'INSERT_ROWS'
@@ -77,6 +67,7 @@
         values: [values]
       };
 
+      // Use Google Sheets API (typically would be called server-side)
       gapi.client.sheets.spreadsheets.values.append(params, body).then((response) => {
         console.log('Success:', response);
         alert('Incident submitted successfully to Google Sheets!');
@@ -107,15 +98,10 @@
 
       console.log("Incident data prepared: ", incidentData);
 
-      // Call the function to write data to the sheet
+      // Call the function to write data to the sheet (would typically be done server-side)
       writeDataToSheet(incidentData);
     });
 
-    // Load the Google API client library after the page loads
-    window.onload = function() {
-      console.log("Window loaded, starting API client initialization...");
-      handleClientLoad();
-    };
   </script>
 </body>
 </html>
