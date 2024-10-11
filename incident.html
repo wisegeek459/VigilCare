@@ -5,9 +5,11 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>VigilCare - Submit Incident</title>
   <link rel="stylesheet" href="styles.css">
-  <!-- New Google Identity Services (GIS) -->
+  
+  <!-- Load Google Identity Services (GIS) -->
   <script src="https://accounts.google.com/gsi/client" async defer></script>
-  <!-- Google API Client Library -->
+  
+  <!-- Load Google API Client Library -->
   <script src="https://apis.google.com/js/api.js"></script>
 </head>
 <body>
@@ -44,6 +46,8 @@
   </div>
 
   <script>
+    let accessToken = null;
+
     // Ensure Google API client is loaded
     function loadGapiClient() {
       return new Promise((resolve, reject) => {
@@ -68,9 +72,12 @@
       });
     }
 
-    // Handle the response from Google Identity Services
+    // Handle the response from Google Identity Services (GIS)
     function handleCredentialResponse(response) {
       console.log("Encoded JWT ID token: " + response.credential);
+
+      // Store the access token for OAuth authorization
+      accessToken = response.credential;
 
       // Initialize Google Sheets API after successful sign-in
       loadGapiClient().then(() => {
@@ -78,7 +85,7 @@
       });
     }
 
-    // Function to write data to Google Sheets
+    // Function to write data to Google Sheets using OAuth
     function writeDataToSheet(values) {
       console.log("Attempting to write data to Google Sheets...");
 
@@ -93,7 +100,19 @@
         values: [values]
       };
 
-      gapi.client.sheets.spreadsheets.values.append(params, body).then((response) => {
+      // Set the authorization header in the request
+      gapi.client.request({
+        path: `https://sheets.googleapis.com/v4/spreadsheets/${params.spreadsheetId}/values/${params.range}:append`,
+        method: 'POST',
+        params: {
+          valueInputOption: params.valueInputOption,
+          insertDataOption: params.insertDataOption
+        },
+        headers: {
+          'Authorization': `Bearer ${accessToken}`
+        },
+        body: body
+      }).then((response) => {
         console.log('Success:', response);
         alert('Incident submitted successfully to Google Sheets!');
       }, (error) => {
