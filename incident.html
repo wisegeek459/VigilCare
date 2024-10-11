@@ -7,6 +7,8 @@
   <link rel="stylesheet" href="styles.css">
   <!-- New Google Identity Services (GIS) -->
   <script src="https://accounts.google.com/gsi/client" async defer></script>
+  <!-- Google API Client Library -->
+  <script src="https://apis.google.com/js/api.js"></script>
 </head>
 <body>
   <div class="form-container">
@@ -42,15 +44,31 @@
   </div>
 
   <script>
+    // Initialize Google API Client for Sheets
+    function initGoogleSheetsAPI() {
+      gapi.load('client', function() {
+        gapi.client.init({
+          apiKey: 'AIzaSyARlGRuTLNmrqLiplRsIq1xyq5pm86ge7c',  // Your API Key
+          discoveryDocs: ["https://sheets.googleapis.com/$discovery/rest?version=v4"],
+        }).then(function() {
+          console.log("Google Sheets API initialized.");
+        }, function(error) {
+          console.error("Error initializing Google Sheets API:", error);
+        });
+      });
+    }
+
     // Handle the response from Google Identity Services
     function handleCredentialResponse(response) {
       console.log("Encoded JWT ID token: " + response.credential);
       
-      // You can validate the JWT token server-side if needed
+      // Initialize Google Sheets API after successful sign-in
+      initGoogleSheetsAPI();
+      
       alert("Signed in successfully!");
     }
 
-    // Function to write data to Google Sheets (use server-side processing for this in production)
+    // Function to write data to Google Sheets
     function writeDataToSheet(values) {
       console.log("Attempting to write data to Google Sheets...");
       
@@ -98,6 +116,7 @@
       // Call the function to write data to the sheet
       writeDataToSheet(incidentData);
     });
+
   </script>
 </body>
 </html>
