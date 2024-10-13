@@ -4,6 +4,8 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>VigilCare - Submit Incident</title>
+
+  <!-- Load Google Identity Services and Google API -->
   <script src="https://accounts.google.com/gsi/client" async defer></script>
   <script src="https://apis.google.com/js/api.js"></script>
 </head>
@@ -13,16 +15,20 @@
     <form id="incident-form">
       <label for="patient-name">Patient Name</label>
       <input type="text" id="patient-name" required>
+
       <label for="attendant-name">Attendant Name</label>
       <input type="text" id="attendant-name" required>
+
       <label for="incident-type">Incident Type</label>
       <select id="incident-type">
         <option value="Verbal Abuse">Verbal Abuse</option>
         <option value="Physical Violence">Physical Violence</option>
         <option value="Property Damage">Property Damage</option>
       </select>
+
       <label for="incident-description">Incident Description</label>
       <textarea id="incident-description" rows="4"></textarea>
+
       <button type="submit">Submit</button>
     </form>
 
@@ -36,27 +42,41 @@
   <script>
     let oauthToken = null;
 
+    // Handle Google Identity Services response
     function handleCredentialResponse(response) {
-      console.log("JWT ID Token: ", response.credential);
-      oauthToken = response.credential;
-
-      gapi.load('client', initializeGoogleSheetsAPI);
+      console.log("Received JWT Token: ", response.credential);
+      oauthToken = response.credential; // Store the token
+      gapi.load('client', initializeGoogleSheetsAPI); // Load the API client after sign-in
     }
 
+    // Initialize Google Sheets API
     function initializeGoogleSheetsAPI() {
       gapi.client.init({
         discoveryDocs: ["https://sheets.googleapis.com/$discovery/rest?version=v4"],
       }).then(() => {
         console.log("Google Sheets API initialized.");
-      }).catch((error) => {
+      }).catch(error => {
         console.error("Error initializing API:", error);
       });
     }
 
+    // Ensure a fresh OAuth token is used
+    function refreshToken() {
+      const auth2 = gapi.auth2.getAuthInstance();
+      auth2.signIn().then(user => {
+        const newToken = user.getAuthResponse().access_token;
+        oauthToken = newToken; // Store the new token
+        console.log("New OAuth token: ", oauthToken);
+      });
+    }
+
+    // Write data to Google Sheets
     function writeDataToSheet(values) {
+      console.log("Attempting to write data to Google Sheets...");
+
       if (!oauthToken) {
         console.error("OAuth token is missing.");
-        alert("Please sign in first.");
+        alert("Please sign in to submit the form.");
         return;
       }
 
@@ -68,7 +88,7 @@
           insertDataOption: 'INSERT_ROWS'
         },
         headers: {
-          'Authorization': `Bearer ${oauthToken}`
+          'Authorization': `Bearer ${oauthToken}` // Add token in headers
         },
         body: {
           values: [values]
@@ -78,10 +98,11 @@
         alert("Incident submitted successfully!");
       }).catch(error => {
         console.error("Error appending data:", error);
-        alert("Failed to submit incident.");
+        alert("Failed to submit the incident.");
       });
     }
 
+    // Handle form submission
     document.getElementById('incident-form').addEventListener('submit', function(e) {
       e.preventDefault();
       const data = [
@@ -89,10 +110,19 @@
         document.getElementById('attendant-name').value,
         document.getElementById('incident-type').value,
         document.getElementById('incident-description').value,
-        new Date().toLocaleString()
+        new Date().toLocaleString() // Timestamp
       ];
       writeDataToSheet(data);
     });
+
+    // Optional: Force user sign-out to ensure fresh login
+    function signOut() {
+      const auth2 = gapi.auth2.getAuthInstance();
+      auth2.signOut().then(() => {
+        console.log("User signed out.");
+        alert("Signed out. Please sign in again.");
+      });
+    }
   </script>
 </body>
 </html>
