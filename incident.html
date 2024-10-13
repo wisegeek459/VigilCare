@@ -4,12 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>VigilCare - Submit Incident</title>
-  <link rel="stylesheet" href="styles.css">
-  
-  <!-- Load Google Identity Services (GIS) -->
   <script src="https://accounts.google.com/gsi/client" async defer></script>
-  
-  <!-- Load Google API Client Library -->
   <script src="https://apis.google.com/js/api.js"></script>
 </head>
 <body>
@@ -17,29 +12,22 @@
     <h2>Submit a New Incident</h2>
     <form id="incident-form">
       <label for="patient-name">Patient Name</label>
-      <input type="text" id="patient-name" placeholder="Enter patient's name" required>
-
+      <input type="text" id="patient-name" required>
       <label for="attendant-name">Attendant Name</label>
-      <input type="text" id="attendant-name" placeholder="Enter attendant's name" required>
-
+      <input type="text" id="attendant-name" required>
       <label for="incident-type">Incident Type</label>
       <select id="incident-type">
         <option value="Verbal Abuse">Verbal Abuse</option>
         <option value="Physical Violence">Physical Violence</option>
         <option value="Property Damage">Property Damage</option>
       </select>
-
       <label for="incident-description">Incident Description</label>
-      <textarea id="incident-description" rows="4" placeholder="Describe the incident"></textarea>
-
+      <textarea id="incident-description" rows="4"></textarea>
       <button type="submit">Submit</button>
     </form>
 
-    <!-- Google Sign-In Button using GIS -->
     <div id="g_id_onload"
          data-client_id="959824072139-lroeeknsfvsmtgnqmtkokm02g1ggqbbe.apps.googleusercontent.com"
-         data-context="signin"
-         data-ux_mode="popup"
          data-callback="handleCredentialResponse">
     </div>
     <div class="g_id_signin" data-type="standard"></div>
@@ -48,94 +36,63 @@
   <script>
     let oauthToken = null;
 
-    // Ensure the callback function is defined before GIS uses it
     function handleCredentialResponse(response) {
-      console.log("Encoded JWT ID token: " + response.credential);
-
-      // Store the OAuth token received from GIS
+      console.log("JWT ID Token: ", response.credential);
       oauthToken = response.credential;
 
-      // Load Google Sheets API after sign-in
       gapi.load('client', initializeGoogleSheetsAPI);
     }
 
-    // Initialize Google Sheets API client
     function initializeGoogleSheetsAPI() {
       gapi.client.init({
         discoveryDocs: ["https://sheets.googleapis.com/$discovery/rest?version=v4"],
       }).then(() => {
         console.log("Google Sheets API initialized.");
       }).catch((error) => {
-        console.error("Error initializing Google Sheets API:", error);
+        console.error("Error initializing API:", error);
       });
     }
 
-    // Function to write data to Google Sheets using OAuth2 token
     function writeDataToSheet(values) {
-      console.log("Attempting to write data to Google Sheets...");
+      if (!oauthToken) {
+        console.error("OAuth token is missing.");
+        alert("Please sign in first.");
+        return;
+      }
 
-      const params = {
-        spreadsheetId: '1FY5Cq9wJZCHVzlFcOQb6Mj3EAa-RvBQ4aD9KFa11elI',  // Your Google Sheets ID
-        range: 'Incidents!A1',  // The range to append data to
-        valueInputOption: 'RAW',
-        insertDataOption: 'INSERT_ROWS'
-      };
-
-      const body = {
-        values: [values]
-      };
-
-      // Make API request to append data to Google Sheets
       gapi.client.request({
-        path: `https://sheets.googleapis.com/v4/spreadsheets/${params.spreadsheetId}/values/${params.range}:append`,
+        path: `https://sheets.googleapis.com/v4/spreadsheets/1FY5Cq9wJZCHVzlFcOQb6Mj3EAa-RvBQ4aD9KFa11elI/values/Incidents!A1:append`,
         method: 'POST',
         params: {
-          valueInputOption: params.valueInputOption,
-          insertDataOption: params.insertDataOption
+          valueInputOption: 'RAW',
+          insertDataOption: 'INSERT_ROWS'
         },
         headers: {
-          'Authorization': `Bearer ${oauthToken}`  // Pass the OAuth2 token in the header
+          'Authorization': `Bearer ${oauthToken}`
         },
-        body: body
-      }).then((response) => {
-        console.log('Success:', response);
-        alert('Incident submitted successfully to Google Sheets!');
-      }, (error) => {
-        console.error('Error writing data to Google Sheets:', error);
-        alert('Failed to submit the incident.');
+        body: {
+          values: [values]
+        }
+      }).then(response => {
+        console.log("Data appended successfully:", response);
+        alert("Incident submitted successfully!");
+      }).catch(error => {
+        console.error("Error appending data:", error);
+        alert("Failed to submit incident.");
       });
     }
 
-    // Handle form submission
     document.getElementById('incident-form').addEventListener('submit', function(e) {
       e.preventDefault();
-      console.log("Form submission triggered.");
-
-      const patientName = document.getElementById('patient-name').value;
-      const attendantName = document.getElementById('attendant-name').value;
-      const incidentType = document.getElementById('incident-type').value;
-      const incidentDescription = document.getElementById('incident-description').value;
-
-      // Prepare the data to send to Google Sheets
-      const incidentData = [
-        patientName,
-        attendantName,
-        incidentType,
-        incidentDescription,
-        new Date().toLocaleString()  // Add a timestamp
+      const data = [
+        document.getElementById('patient-name').value,
+        document.getElementById('attendant-name').value,
+        document.getElementById('incident-type').value,
+        document.getElementById('incident-description').value,
+        new Date().toLocaleString()
       ];
-
-      console.log("Incident data prepared: ", incidentData);
-
-      // Ensure OAuth token is available before writing data
-      if (oauthToken) {
-        writeDataToSheet(incidentData);
-      } else {
-        console.error("OAuth Token is missing. Please sign in.");
-        alert("Please sign in to submit the incident.");
-      }
+      writeDataToSheet(data);
     });
-
   </script>
 </body>
 </html>
