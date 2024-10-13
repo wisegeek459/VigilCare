@@ -5,6 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>VigilCare - Submit Incident</title>
 
+  <!-- Load Google Identity Services (GIS) -->
+  <script src="https://accounts.google.com/gsi/client" async defer></script>
   <!-- Load Google API Client Library -->
   <script src="https://apis.google.com/js/api.js"></script>
 </head>
@@ -30,35 +32,58 @@
 
       <button type="submit">Submit</button>
     </form>
+
+    <!-- Google Sign-In Button -->
+    <div id="g_id_onload"
+         data-client_id="959824072139-lroeeknsfvsmtgnqmtkokm02g1ggqbbe.apps.googleusercontent.com"
+         data-context="signin"
+         data-ux_mode="popup"
+         data-callback="handleCredentialResponse"
+         data-auto_prompt="false">
+    </div>
+
+    <div class="g_id_signin" data-type="standard"></div>
   </div>
 
   <script>
     let oauthToken = null;
 
-    // Load and initialize Google Auth2 to get OAuth access token
-    gapi.load('client:auth2', () => {
-      gapi.auth2.init({
-        client_id: '959824072139-lroeeknsfvsmtgnqmtkokm02g1ggqbbe.apps.googleusercontent.com',
-        scope: 'https://www.googleapis.com/auth/spreadsheets'
-      }).then(() => {
-        console.log("Google Auth initialized.");
-        signInAndGetToken(); // Get OAuth token
-      }).catch(error => console.error("Error initializing Google Auth:", error));
-    });
-
-    // Function to sign in and get OAuth 2.0 access token
-    function signInAndGetToken() {
-      const authInstance = gapi.auth2.getAuthInstance();
-      authInstance.signIn().then(user => {
-        oauthToken = user.getAuthResponse().access_token;
-        console.log("OAuth Token: ", oauthToken);
-      }).catch(error => console.error("Error signing in:", error));
+    // Handle the response from Google Identity Services (GIS)
+    function handleCredentialResponse(response) {
+      console.log("Received ID Token: ", response.credential);
+      exchangeIDTokenForAccessToken(response.credential);
     }
 
-    // Function to write data to Google Sheets
-    function writeDataToSheet(values) {
-      console.log("Attempting to write data to Google Sheets...");
+    // Exchange the ID token for an OAuth access token
+    async function exchangeIDTokenForAccessToken(idToken) {
+      try {
+        const response = await fetch("https://oauth2.googleapis.com/token", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/x-www-form-urlencoded"
+          },
+          body: new URLSearchParams({
+            client_id: "959824072139-lroeeknsfvsmtgnqmtkokm02g1ggqbbe.apps.googleusercontent.com",
+            client_secret: "GOCSPX-xyz123abc456",  // Replace with your real client secret
+            grant_type: "urn:ietf:params:oauth:grant-type:jwt-bearer",
+            assertion: idToken
+          })
+        });
 
+        const data = await response.json();
+        if (data.access_token) {
+          oauthToken = data.access_token;
+          console.log("OAuth Access Token: ", oauthToken);
+        } else {
+          console.error("Failed to get access token:", data);
+        }
+      } catch (error) {
+        console.error("Error exchanging token:", error);
+      }
+    }
+
+    // Write data to Google Sheets
+    function writeDataToSheet(values) {
       if (!oauthToken) {
         console.error("OAuth token is missing.");
         alert("Please sign in to submit the form.");
@@ -99,7 +124,7 @@
 
       const data = [patientName, attendantName, incidentType, incidentDescription, timestamp];
 
-      writeDataToSheet(data); // Call the function to write data
+      writeDataToSheet(data);
     });
   </script>
 </body>
