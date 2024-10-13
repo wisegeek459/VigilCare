@@ -49,50 +49,29 @@
   <script>
     let accessToken = null;
 
-    // Handle GIS Sign-In Response
+    // Handle Google Identity Services (GIS) sign-in response
     function handleCredentialResponse(response) {
       console.log("Received ID Token: ", response.credential);
 
-      // Exchange ID Token for OAuth Access Token
-      const body = new URLSearchParams();
-      body.append('client_id', '959824072139-lroeeknsfvsmtgnqmtkokm02g1ggqbbe.apps.googleusercontent.com');
-      body.append('grant_type', 'authorization_code');
-      body.append('code', response.credential); // Assuming OAuth Code Flow
-      body.append('redirect_url', 'https://wisegeek459.github.io/VigilCare/incident.html');
+      // Initialize API client after obtaining OAuth token
+      accessToken = response.credential; // Use token directly for authorization
 
-      fetch('https://oauth2.googleapis.com/token', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/x-www-form-urlencoded'
-        },
-        body: body
-      })
-      .then(response => response.json())
-      .then(data => {
-        if (data.access_token) {
-          accessToken = data.access_token;
-          console.log("OAuth Access Token: ", accessToken);
-          initializeGoogleSheetsAPI();
-        } else {
-          console.error("Failed to retrieve access token:", data);
-          alert("Failed to sign in.");
-        }
-      })
-      .catch(error => {
-        console.error("Error exchanging token:", error);
-        alert("Error during sign-in.");
-      });
+      initializeGoogleSheetsAPI();
     }
 
     // Initialize Google Sheets API
     function initializeGoogleSheetsAPI() {
-      gapi.client.init({
-        apiKey: 'AIzaSyARlGRuTLNmrqLiplRsIq1xyq5pm86ge7c',
-        discoveryDocs: ['https://sheets.googleapis.com/$discovery/rest?version=v4']
-      }).then(() => {
-        console.log("Google Sheets API initialized.");
-      }).catch(error => {
-        console.error("Error initializing Google API client:", error);
+      gapi.load('client', async () => {
+        try {
+          await gapi.client.init({
+            apiKey: 'AIzaSyARlGRuTLNmrqLiplRsIq1xyq5pm86ge7c',
+            discoveryDocs: ['https://sheets.googleapis.com/$discovery/rest?version=v4']
+          });
+
+          console.log("Google Sheets API initialized.");
+        } catch (error) {
+          console.error("Error initializing Google API client:", error);
+        }
       });
     }
 
@@ -120,7 +99,7 @@
         console.log("Data appended successfully:", response);
         alert("Incident submitted successfully!");
       }).catch(error => {
-        console.error("Error appending data:", error);
+        console.error("Error appending data:", JSON.stringify(error, null, 2));
         alert("Failed to submit incident.");
       });
     }
