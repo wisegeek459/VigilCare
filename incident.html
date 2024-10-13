@@ -35,18 +35,19 @@
   <script>
     let oauthToken = null;
 
-    // Initialize Google Auth2 to get OAuth token
+    // Load and initialize Google Auth2 to get OAuth access token
     gapi.load('client:auth2', () => {
       gapi.auth2.init({
         client_id: '959824072139-lroeeknsfvsmtgnqmtkokm02g1ggqbbe.apps.googleusercontent.com',
         scope: 'https://www.googleapis.com/auth/spreadsheets'
       }).then(() => {
         console.log("Google Auth initialized.");
+        signInAndGetToken(); // Get OAuth token
       }).catch(error => console.error("Error initializing Google Auth:", error));
     });
 
-    // Function to handle user sign-in and get OAuth token
-    function getOAuthToken() {
+    // Function to sign in and get OAuth 2.0 access token
+    function signInAndGetToken() {
       const authInstance = gapi.auth2.getAuthInstance();
       authInstance.signIn().then(user => {
         oauthToken = user.getAuthResponse().access_token;
@@ -54,10 +55,7 @@
       }).catch(error => console.error("Error signing in:", error));
     }
 
-    // Trigger token retrieval when form is loaded
-    window.onload = getOAuthToken;
-
-    // Write data to Google Sheets
+    // Function to write data to Google Sheets
     function writeDataToSheet(values) {
       console.log("Attempting to write data to Google Sheets...");
 
@@ -101,9 +99,8 @@
 
       const data = [patientName, attendantName, incidentType, incidentDescription, timestamp];
 
-      writeDataToSheet(data);
+      writeDataToSheet(data); // Call the function to write data
     });
-
   </script>
 </body>
 </html>
