@@ -49,36 +49,30 @@
   <script>
     let oauthToken = null;
 
-    // Handle the response from Google Identity Services (GIS)
+    // Handle Google Identity Services (GIS) sign-in response
     function handleCredentialResponse(response) {
       console.log("Received ID Token: ", response.credential);
 
-      // Initialize Google API client and request the OAuth token
-      gapi.load('client:auth2', async () => {
-        try {
-          await gapi.auth2.init({
-            client_id: '959824072139-lroeeknsfvsmtgnqmtkokm02g1ggqbbe.apps.googleusercontent.com',
-            scope: 'https://www.googleapis.com/auth/spreadsheets'
-          });
+      gapi.load('client', initializeGoogleSheetsAPI);  // Initialize API client
+    }
 
-          console.log("Google API client initialized.");
-
-          // Sign in the user and retrieve the OAuth token
-          const user = gapi.auth2.getAuthInstance().currentUser.get();
-          oauthToken = user.getAuthResponse().access_token;
-
-          console.log("OAuth Token: ", oauthToken);
-        } catch (error) {
-          console.error("Error initializing Google API client:", error);
-        }
+    // Initialize Google Sheets API client
+    function initializeGoogleSheetsAPI() {
+      gapi.client.init({
+        apiKey: 'AIzaSyARlGRuTLNmrqLiplRsIq1xyq5pm86ge7c',
+        discoveryDocs: ['https://sheets.googleapis.com/$discovery/rest?version=v4']
+      }).then(() => {
+        console.log("Google Sheets API initialized.");
+        oauthToken = gapi.auth.getToken().access_token;  // Retrieve OAuth token
+      }).catch((error) => {
+        console.error("Error initializing Google API client:", error);
       });
     }
 
-    // Function to write data to Google Sheets
+    // Write data to Google Sheets
     function writeDataToSheet(values) {
       if (!oauthToken) {
-        console.error("OAuth token is missing.");
-        alert("Please sign in to submit the form.");
+        alert("Please sign in first.");
         return;
       }
 
@@ -99,7 +93,7 @@
         console.log("Data appended successfully:", response);
         alert("Incident submitted successfully!");
       }).catch(error => {
-        console.error("Error appending data:", JSON.stringify(error, null, 2));
+        console.error("Error appending data:", error);
         alert("Failed to submit incident.");
       });
     }
