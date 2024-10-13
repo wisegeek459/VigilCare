@@ -58,7 +58,7 @@
       body.append('client_id', '959824072139-lroeeknsfvsmtgnqmtkokm02g1ggqbbe.apps.googleusercontent.com');
       body.append('grant_type', 'authorization_code');
       body.append('code', response.credential); // Assuming OAuth Code Flow
-      body.append('redirect_uri', 'https://wisegeek459.github.io/VigilCare/incident.html');
+      body.append('redirect_url', 'https://wisegeek459.github.io/VigilCare/incident.html');
 
       fetch('https://oauth2.googleapis.com/token', {
         method: 'POST',
